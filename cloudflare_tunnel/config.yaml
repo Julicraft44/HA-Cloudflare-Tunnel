@@ -1,0 +1,25 @@
+name: "HA Cloudflare Tunnel"
+version: "1.0.3"
+slug: "cloudflare_tunnel"
+description: "Expose your Home Assistant instance (and other local services) via a Cloudflare Tunnel"
+url: "https://github.com/Julicraft44/HA-Cloudflare-Tunnel"
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: application
+boot: auto
+init: false
+homeassistant_api: true
+options:
+  tunnel_token: ""
+  log_level: "info"
+  metrics_port: 2000
+  update_interval: 30
+schema:
+  tunnel_token: str
+  log_level: list(trace|debug|info|warn|error|fatal)
+  metrics_port: int
+  update_interval: int

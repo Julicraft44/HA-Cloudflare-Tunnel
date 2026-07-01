@@ -1,0 +1,6 @@
+# These files are only needed for the HA store UI and documentation.
+# They do not belong in the Docker build context.
+CHANGELOG.md
+DOCS.md
+logo.png
+translations/

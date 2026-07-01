@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bashio
+
+METRICS_PORT=$(bashio::config 'metrics_port')
+UPDATE_INTERVAL=$(bashio::config 'update_interval')
+
+if [ "${UPDATE_INTERVAL}" -lt 5 ]; then
+    bashio::log.warning "update_interval is very low (${UPDATE_INTERVAL}s). Clamping to 10s."
+    UPDATE_INTERVAL=10
+fi
+
+bashio::log.info "Starting metrics monitor (interval: ${UPDATE_INTERVAL}s)..."
+
+exec python3 /monitor.py "${METRICS_PORT}" "${UPDATE_INTERVAL}"

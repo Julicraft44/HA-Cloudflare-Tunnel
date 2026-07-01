@@ -1,0 +1,95 @@
+name: Update HA base image version
+
+on:
+  schedule:
+    # Runs every Monday at 07:30 UTC (30 min after cloudflared check)
+    - cron: "30 7 * * 1"
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Check and update HA base image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest HA base image version
+        id: latest
+        run: |
+          LATEST=$(curl -fsSL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/home-assistant/docker-base/tags?per_page=100" \
+            | python3 -c "
+import json, sys, re
+data = json.load(sys.stdin)
+versions = [t['name'] for t in data if re.match(r'^[0-9]+\.[0-9]+$', t['name'])]
+versions.sort(key=lambda v: [int(x) for x in v.split('.')])
+print(versions[-1])
+")
+          echo "version=${LATEST}" >> "$GITHUB_OUTPUT"
+          echo "Latest HA base: ${LATEST}"
+
+      - name: Get currently pinned version
+        id: current
+        run: |
+          VERSION=$(grep -oP 'ghcr\.io/home-assistant/base:\K[0-9]+\.[0-9]+' cloudflare_tunnel/Dockerfile)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Current HA base: ${VERSION}"
+
+      - name: Skip if already up to date
+        if: steps.latest.outputs.version == steps.current.outputs.version
+        run: echo "Already on HA base ${{ steps.current.outputs.version }}. Nothing to do."
+
+      - name: Update Dockerfile
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          sed -i \
+            "s|ghcr.io/home-assistant/base:[0-9.]*|ghcr.io/home-assistant/base:${{ steps.latest.outputs.version }}|" \
+            cloudflare_tunnel/Dockerfile
+          echo "Updated to HA base ${{ steps.latest.outputs.version }}"
+
+      - name: Bump add-on version patch
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        id: bump
+        run: |
+          CURRENT_ADDON=$(grep -oP 'version: "\K[^"]+' cloudflare_tunnel/config.yaml)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT_ADDON}"
+          NEW_ADDON="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          sed -i "s/version: \"${CURRENT_ADDON}\"/version: \"${NEW_ADDON}\"/" cloudflare_tunnel/config.yaml
+          echo "Add-on version bumped: ${CURRENT_ADDON} → ${NEW_ADDON}"
+          echo "addon_version=${NEW_ADDON}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepend changelog entry
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          NEW_ENTRY="## ${{ steps.bump.outputs.addon_version }}\n\n- Update base image to HA base ${{ steps.latest.outputs.version }}\n"
+          OLD=$(cat cloudflare_tunnel/CHANGELOG.md)
+          printf "%b\n%s" "${NEW_ENTRY}" "${OLD}" > cloudflare_tunnel/CHANGELOG.md
+
+      - name: Open pull request
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update base image to HA base ${{ steps.latest.outputs.version }}"
+          branch: "update/ha-base-${{ steps.latest.outputs.version }}"
+          delete-branch: true
+          title: "Update base image to HA base ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated dependency update.
+
+            | | Version |
+            |---|---|
+            | **HA base** (before) | `${{ steps.current.outputs.version }}` |
+            | **HA base** (after)  | `${{ steps.latest.outputs.version }}` |
+
+            `ghcr.io/home-assistant/base` is a multi-arch manifest — all architectures are covered automatically.
+
+            ---
+            *This PR was created automatically by the `update-base-image` workflow.*
+          labels: "dependencies,automated"

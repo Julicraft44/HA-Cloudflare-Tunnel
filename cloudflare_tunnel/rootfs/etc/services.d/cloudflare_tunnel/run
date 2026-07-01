@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bashio
+
+TUNNEL_TOKEN=$(bashio::config 'tunnel_token')
+LOG_LEVEL=$(bashio::config 'log_level')
+METRICS_PORT=$(bashio::config 'metrics_port')
+
+if bashio::var.is_empty "${TUNNEL_TOKEN}"; then
+    bashio::log.fatal "tunnel_token is not configured. Add it in the add-on configuration."
+    exit 1
+fi
+
+if [ "${METRICS_PORT}" -lt 1024 ] || [ "${METRICS_PORT}" -gt 65535 ]; then
+    bashio::log.fatal "metrics_port must be between 1024 and 65535 (got: ${METRICS_PORT})."
+    exit 1
+fi
+
+bashio::log.info "Starting cloudflared (log level: ${LOG_LEVEL}, metrics port: ${METRICS_PORT})..."
+
+exec cloudflared tunnel \
+    --metrics "localhost:${METRICS_PORT}" \
+    --loglevel "${LOG_LEVEL}" \
+    run --token "${TUNNEL_TOKEN}"

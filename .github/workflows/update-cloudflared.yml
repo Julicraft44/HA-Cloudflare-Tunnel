@@ -1,0 +1,88 @@
+name: Update cloudflared version
+
+on:
+  schedule:
+    # Runs every Monday at 07:00 UTC
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Check and update cloudflared
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest cloudflared release
+        id: latest
+        run: |
+          VERSION=$(curl -fsSL https://api.github.com/repos/cloudflare/cloudflared/releases/latest \
+            | jq -r '.tag_name')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Latest cloudflared: ${VERSION}"
+
+      - name: Get currently pinned version
+        id: current
+        run: |
+          VERSION=$(grep -oP 'ARG CLOUDFLARED_VERSION="\K[^"]+' cloudflare_tunnel/Dockerfile)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Current cloudflared: ${VERSION}"
+
+      - name: Skip if already up to date
+        if: steps.latest.outputs.version == steps.current.outputs.version
+        run: |
+          echo "Already on latest cloudflared (${{ steps.current.outputs.version }}). Nothing to do."
+
+      - name: Update Dockerfile
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          sed -i \
+            's/ARG CLOUDFLARED_VERSION=".*"/ARG CLOUDFLARED_VERSION="${{ steps.latest.outputs.version }}"/' \
+            cloudflare_tunnel/Dockerfile
+          echo "Updated to ${{ steps.latest.outputs.version }}"
+
+      - name: Bump add-on version patch
+        id: bump
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          CURRENT_ADDON=$(grep -oP 'version: "\K[^"]+' cloudflare_tunnel/config.yaml)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT_ADDON}"
+          NEW_ADDON="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          sed -i "s/version: \"${CURRENT_ADDON}\"/version: \"${NEW_ADDON}\"/" cloudflare_tunnel/config.yaml
+          echo "Add-on version bumped: ${CURRENT_ADDON} → ${NEW_ADDON}"
+          echo "addon_version=${NEW_ADDON}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepend changelog entry
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          NEW_ENTRY="## ${{ steps.bump.outputs.addon_version }}\n\n- Update cloudflared to ${{ steps.latest.outputs.version }}\n"
+          OLD=$(cat cloudflare_tunnel/CHANGELOG.md)
+          printf "%b\n%s" "${NEW_ENTRY}" "${OLD}" > cloudflare_tunnel/CHANGELOG.md
+
+      - name: Open pull request
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update cloudflared to ${{ steps.latest.outputs.version }}"
+          branch: "update/cloudflared-${{ steps.latest.outputs.version }}"
+          delete-branch: true
+          title: "Update cloudflared to ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated dependency update.
+
+            | | Version |
+            |---|---|
+            | **cloudflared** (before) | `${{ steps.current.outputs.version }}` |
+            | **cloudflared** (after)  | `${{ steps.latest.outputs.version }}` |
+
+            Please review the [cloudflared release notes](https://github.com/cloudflare/cloudflared/releases/tag/${{ steps.latest.outputs.version }}) before merging.
+
+            ---
+            *This PR was created automatically by the `update-cloudflared` workflow.*
+          labels: "dependencies,automated"

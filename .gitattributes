@@ -1,0 +1,8 @@
+# Normalize all text files to LF on checkout (scripts run on Linux)
+* text=auto eol=lf
+
+# Explicitly enforce LF for files that must not have CRLF
+*.sh text eol=lf
+*.py text eol=lf
+Dockerfile text eol=lf
+cloudflare_tunnel/rootfs/**/* text eol=lf

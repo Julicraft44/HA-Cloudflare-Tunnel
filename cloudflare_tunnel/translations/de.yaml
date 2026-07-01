@@ -1,0 +1,25 @@
+configuration:
+  tunnel_token:
+    name: Tunnel-Token
+    description: >-
+      Dein Cloudflare-Tunnel-Token. Erstelle einen Tunnel im Cloudflare Zero Trust
+      Dashboard (dash.cloudflare.com → Zero Trust → Networks → Tunnels), wähle
+      „Cloudflared" als Connector-Typ und kopiere das Token aus dem Schritt
+      „Install and run a connector". Halte diesen Wert geheim.
+  log_level:
+    name: Log-Level
+    description: >-
+      Ausführlichkeit der cloudflared-Protokollausgabe. Verwende „info" für den
+      normalen Betrieb und „debug" zur Fehlersuche bei Verbindungsproblemen.
+  metrics_port:
+    name: Metrics-Port
+    description: >-
+      Interner Port, über den cloudflared seinen Prometheus-Metrics-Endpunkt
+      bereitstellt. Nur ändern, wenn Port 2000 bereits von einem anderen Dienst
+      auf deinem System verwendet wird.
+  update_interval:
+    name: Entitäts-Aktualisierungsintervall (Sekunden)
+    description: >-
+      Wie oft das Add-on die cloudflared-Metriken ausliest und die Home Assistant
+      Sensor-Entitäten aktualisiert. Niedrigere Werte liefern aktuellere Daten,
+      beanspruchen aber etwas mehr CPU. Empfohlener Mindestwert ist 10.

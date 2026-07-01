@@ -1,0 +1,25 @@
+configuration:
+  tunnel_token:
+    name: Tunnel Token
+    description: >-
+      Your Cloudflare Tunnel token. Create a tunnel in the Cloudflare Zero Trust
+      dashboard (dash.cloudflare.com → Zero Trust → Networks → Tunnels), choose
+      "Cloudflared" as the connector type, and copy the token shown in the
+      "Install and run a connector" step. Keep this value secret.
+  log_level:
+    name: Log Level
+    description: >-
+      Verbosity of cloudflared log output. Use "info" for normal operation and
+      "debug" when troubleshooting connection issues.
+  metrics_port:
+    name: Metrics Port
+    description: >-
+      Internal port used by cloudflared to expose its Prometheus metrics
+      endpoint. Only change this if port 2000 conflicts with another service
+      running on your system.
+  update_interval:
+    name: Entity Update Interval (seconds)
+    description: >-
+      How often the add-on reads cloudflared metrics and updates the Home
+      Assistant sensor entities. Lower values give fresher data at the cost of
+      slightly more CPU. Minimum recommended value is 10.
