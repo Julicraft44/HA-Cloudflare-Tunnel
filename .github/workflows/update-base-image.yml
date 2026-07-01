@@ -24,13 +24,7 @@ jobs:
           LATEST=$(curl -fsSL \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/home-assistant/docker-base/tags?per_page=100" \
-            | python3 -c "
-import json, sys, re
-data = json.load(sys.stdin)
-versions = [t['name'] for t in data if re.match(r'^[0-9]+\.[0-9]+$', t['name'])]
-versions.sort(key=lambda v: [int(x) for x in v.split('.')])
-print(versions[-1])
-")
+            | python3 -c 'import json,sys,re;d=json.load(sys.stdin);v=sorted([t["name"] for t in d if re.match(r"^[0-9]+\.[0-9]+$",t["name"])],key=lambda x:[int(i) for i in x.split(".")]);print(v[-1])')
           echo "version=${LATEST}" >> "$GITHUB_OUTPUT"
           echo "Latest HA base: ${LATEST}"
 
