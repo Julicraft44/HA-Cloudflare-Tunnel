@@ -7,7 +7,7 @@ FROM ${BUILD_FROM}
 
 # ── Cloudflared version ──────────────────────────────────────────────────────
 # Updated automatically by .github/workflows/update-cloudflared.yml
-ARG CLOUDFLARED_VERSION="2026.6.1"
+ARG CLOUDFLARED_VERSION="2026.7.0"
 # ────────────────────────────────────────────────────────────────────────────
 
 ARG BUILD_ARCH
