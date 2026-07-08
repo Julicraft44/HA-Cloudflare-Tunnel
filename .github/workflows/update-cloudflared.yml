@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Get latest cloudflared release
         id: latest
@@ -66,7 +66,7 @@ jobs:
 
       - name: Open pull request
         if: steps.latest.outputs.version != steps.current.outputs.version
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update cloudflared to ${{ steps.latest.outputs.version }}"
