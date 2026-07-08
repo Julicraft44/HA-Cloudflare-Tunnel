@@ -48,6 +48,22 @@ jobs:
             cloudflare_tunnel/Dockerfile
           echo "Updated to ${{ steps.latest.outputs.version }}"
 
+      - name: Build and smoke-test image
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          docker build \
+            --build-arg BUILD_ARCH=amd64 \
+            --build-arg BUILD_VERSION=ci \
+            -t ha-cft:ci \
+            cloudflare_tunnel/
+          docker run --rm ha-cft:ci cloudflared --version
+          docker run --rm ha-cft:ci sh -c \
+            'test -x /etc/services.d/cloudflare_tunnel/run && \
+             test -x /etc/services.d/cloudflare_tunnel_monitor/run && \
+             test -x /healthcheck.sh && \
+             test -f /monitor.py'
+          echo "Smoke test passed."
+
       - name: Bump add-on version patch
         id: bump
         if: steps.latest.outputs.version != steps.current.outputs.version
