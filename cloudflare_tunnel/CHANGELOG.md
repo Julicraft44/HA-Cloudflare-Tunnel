@@ -1,3 +1,8 @@
+## 1.0.4
+
+- Update base image to Alpine 3.24
+- Update cloudflared to 2026.7.0
+
 ## 1.0.2
 
 - Fix s6-overlay startup: add `init: false` to config.yaml (required for s6-overlay v3)
