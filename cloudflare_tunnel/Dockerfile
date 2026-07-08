@@ -2,7 +2,7 @@
 # correct HA base image for the target architecture.
 # The default below is only used when building locally (without the supervisor).
 # Updated automatically by .github/workflows/update-base-image.yml
-ARG BUILD_FROM=ghcr.io/home-assistant/base:3.21
+ARG BUILD_FROM=ghcr.io/home-assistant/base:3.24
 FROM ${BUILD_FROM}
 
 # ── Cloudflared version ──────────────────────────────────────────────────────

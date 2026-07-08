@@ -1,5 +1,6 @@
 ## 1.0.4
 
+- Update base image to Alpine 3.24
 - Update cloudflared to 2026.7.0
 
 ## 1.0.2
