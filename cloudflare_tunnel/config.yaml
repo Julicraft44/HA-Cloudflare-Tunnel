@@ -1,5 +1,5 @@
 name: "HA Cloudflare Tunnel"
-version: "1.0.4"
+version: "1.0.5"
 slug: "cloudflare_tunnel"
 description: "Expose your Home Assistant instance (and other local services) via a Cloudflare Tunnel"
 url: "https://github.com/Julicraft44/HA-Cloudflare-Tunnel"
