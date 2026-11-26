@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Update cloudflared to 2026.11.2
+
 ## 1.0.7
 
 - Update cloudflared to 2026.10.7
